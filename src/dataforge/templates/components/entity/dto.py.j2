@@ -1,0 +1,20 @@
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict
+
+
+class {{ class_name }}(BaseModel):
+    """Esquema de datos para {{ entity_name }}.
+    
+    Este DTO actúa como el contrato entre las capas de Source, Transform y Repository.
+    """
+    model_config = ConfigDict(from_attributes=True)
+
+    id: Optional[int] = None
+    # Añade aquí tus campos
+    name: str
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None

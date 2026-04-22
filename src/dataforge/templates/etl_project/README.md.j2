@@ -1,0 +1,51 @@
+# {{ project_name }}
+
+Proyecto de datos generado con DataForge el {{ created_at }}.
+
+## Arquitectura en capas
+
+```
+src/{{ package_name }}/
+├── sources/        # Fetchers (HTTP, APIs, scraping, archivos)
+├── dtos/           # Pydantic schemas: contrato entre capas
+├── transforms/     # Limpieza, normalización, validación
+├── repositories/   # Acceso a Postgres (psycopg3 + SQL crudo)
+├── services/       # Orquestación
+├── pipelines/      # Jobs ETL ejecutables
+└── db/             # Pool de conexiones
+```
+
+## Arranque rápido
+
+```bash
+# 1. Levantar Postgres local
+docker compose up -d
+
+# 2. Instalar proyecto (con sus deps)
+pip install -e ".[dev]"
+
+# 3. Copiar variables de entorno
+cp .env.example .env
+
+# 4. Aplicar migraciones
+dfg migrate
+
+# 5. Verificar
+dfg status
+```
+
+## Flujo de trabajo típico
+
+1. `dfg add source <nombre>` — generar un nuevo fetcher
+2. Editar `src/{{ package_name }}/sources/<nombre>.py` con la lógica de fetch
+3. `dfg add entity <nombre>` — generar DTO + repositorio + migración SQL
+4. `dfg migrate` — aplicar la migración
+5. `dfg add pipeline <nombre>` — generar un pipeline que junta todo
+6. `dfg run <nombre>` — ejecutar el pipeline
+
+## Principios
+
+- **SQL crudo en repositorios**. Sin ORM. Los queries son visibles y debuggeables.
+- **DTOs Pydantic en las fronteras**. Validación entra/sale.
+- **Migraciones versionadas**. Archivos `.sql` en `migrations/`, aplicados en orden.
+- **Notebooks solo para exploración**. La lógica reutilizable vive en `src/`.

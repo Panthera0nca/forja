@@ -1,0 +1,12 @@
+-- Migración para la tabla {{ table_name }}
+-- Creado el: {{ created_at }}
+
+CREATE TABLE IF NOT EXISTS {{ table_name }} (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índices recomendados
+CREATE INDEX IF NOT EXISTS idx_{{ table_name }}_name ON {{ table_name }}(name);

@@ -1,0 +1,31 @@
+# ---
+# jupyter:
+#   jupytext:
+#     formats: py:percent
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+# ---
+
+# %% [markdown]
+# # Exploración inicial
+#
+# Notebook de arranque. Usá esto para explorar datos crudos antes de escribir
+# el fetcher/transform definitivo. Cuando algo se vuelva reutilizable, migralo
+# a `src/`.
+
+# %%
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+print("DATABASE_URL configurada:", bool(os.getenv("DATABASE_URL")))
+
+# %%
+# Conectar a Postgres y hacer una query de prueba
+from {{ package_name }}.db import get_connection
+
+with get_connection() as conn, conn.cursor() as cur:
+    cur.execute("SELECT version();")
+    print(cur.fetchone())
