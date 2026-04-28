@@ -1,0 +1,19 @@
+"""{{ class_name }}Source — fetcher para [describí el origen aquí]."""
+from __future__ import annotations
+
+from typing import Iterable
+
+
+class {{ class_name }}Source:
+    """Trae datos crudos de [origen].
+
+    No valida, no transforma, no persiste. Solo trae.
+    Una vez definida la entidad, reemplazá `dict` por el DTO correspondiente:
+        from {{ package_name }}.dtos.{{ snake_name }} import {{ class_name }}
+    """
+
+    name = "{{ snake_name }}"
+
+    def fetch(self) -> Iterable[dict]:
+        """Implementá la lógica de ingesta aquí (HTTP, archivo, DB, API...)."""
+        raise NotImplementedError

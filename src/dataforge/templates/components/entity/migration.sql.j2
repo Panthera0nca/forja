@@ -1,0 +1,17 @@
+-- Migración para la tabla {{ table_name }}
+-- Creado el: {{ created_at }}
+
+CREATE TABLE IF NOT EXISTS {{ table_name }} (
+{%- for f in sql_fields %}
+    {{ f.name_padded }}{{ f.sql_def }}{% if not loop.last or fk_constraints %},{% endif %}{% if f.comment %}  -- {{ f.comment }}{% endif %}
+{%- endfor %}
+{%- for fk in fk_constraints %}
+    CONSTRAINT {{ fk.constraint_name }}
+        FOREIGN KEY ({{ fk.field }}) REFERENCES {{ fk.ref_table }}(id) ON DELETE RESTRICT{% if not loop.last %},{% endif %}
+{%- endfor %}
+);
+{% if indexes %}
+{% for idx in indexes %}
+CREATE INDEX IF NOT EXISTS {{ idx.name }} ON {{ table_name }}({{ idx.column }});
+{%- endfor %}
+{% endif %}

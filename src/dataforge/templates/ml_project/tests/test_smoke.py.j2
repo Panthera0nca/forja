@@ -1,0 +1,48 @@
+"""Tests de humo: el package importa y las capas ML están operativas."""
+import numpy as np
+import pytest
+
+import {{ package_name }}
+from {{ package_name }}.features.store import FeatureStore
+from {{ package_name }}.models.base import Predictor
+from {{ package_name }}.evaluation.metrics import cross_validate, evaluate
+
+
+def test_package_imports():
+    assert hasattr({{ package_name }}, "__version__")
+
+
+def test_feature_store_transform():
+    fs = FeatureStore()
+    fs.register("x1", lambda r: r["a"])
+    fs.register("x2", lambda r: r["b"] * 2)
+    records = [{"a": 1.0, "b": 2.0}, {"a": 3.0, "b": 4.0}]
+    X = fs.transform(records)
+    assert X.shape == (2, 2)
+    assert X[0, 1] == pytest.approx(4.0)
+
+
+def test_predictor_protocol_with_sklearn():
+    from sklearn.dummy import DummyClassifier
+    model = DummyClassifier()
+    assert isinstance(model, Predictor)
+
+
+def test_cross_validate_returns_mean_and_std():
+    from sklearn.dummy import DummyClassifier
+    X = np.random.rand(50, 4)
+    y = np.array([0] * 25 + [1] * 25)
+    results = cross_validate(lambda: DummyClassifier(), X, y, n_splits=3)
+    assert "accuracy" in results
+    assert "accuracy_std" in results
+
+
+def test_evaluate_classification():
+    from sklearn.dummy import DummyClassifier
+    X = np.random.rand(20, 2)
+    y = np.array([0] * 10 + [1] * 10)
+    model = DummyClassifier(strategy="most_frequent")
+    model.fit(X, y)
+    metrics = evaluate(model, X, y, task="classification")
+    assert "accuracy" in metrics
+    assert "f1_macro" in metrics

@@ -1,0 +1,57 @@
+# {{ project_name }}
+
+Proyecto ML generado con DataForge el {{ created_at }}.
+
+## Arquitectura
+
+```
+src/{{ package_name }}/
+├── sources/        # Fetchers: traen datos crudos del exterior
+├── dtos/           # Pydantic schemas: contrato entre capas
+├── transforms/     # Limpieza, normalización, feature engineering
+├── features/       # Feature store ligero + definición de features
+├── models/         # Predictor Protocol + wrappers de modelos concretos
+├── evaluation/     # Métricas, cross-validation, reportes
+├── pipelines/
+│   ├── training.py     # train/val/test split → fit → evaluar → guardar
+│   └── inference.py    # cargar modelo → predict → persistir resultados
+├── repositories/   # Acceso a Postgres (psycopg3 + SQL crudo)
+└── db/             # Pool de conexiones
+```
+
+## Arranque rápido
+
+```bash
+# 1. Levantar Postgres local
+docker compose up -d
+
+# 2. Instalar proyecto con dependencias ML
+pip install -e ".[dev,ml]"
+
+# 3. Copiar variables de entorno
+cp .env.example .env
+
+# 4. Aplicar migraciones
+dfg migrate
+
+# 5. Verificar
+dfg status
+```
+
+## Flujo de trabajo típico
+
+1. Explorar datos en `notebooks/00_exploration.py`
+2. Definir features en `features/store.py`
+3. Implementar el modelo en `models/` (cualquier objeto con `.fit()` / `.predict()`)
+4. Ajustar métricas en `evaluation/metrics.py`
+5. Armar el pipeline de entrenamiento en `pipelines/training.py`
+6. `dfg run training` — entrenar y evaluar
+7. `dfg run inference` — correr inferencia sobre datos nuevos
+
+## Principios
+
+- **`Predictor` es un Protocol**, no una clase base. Sklearn, XGBoost, PyTorch: todos sirven.
+- **Features separadas del modelo.** El preprocessing vive en `transforms/` y `features/`, no dentro del modelo.
+- **Hiperparámetros en `config/params.py`.** Nada hardcodeado en los pipelines.
+- **Cross-validation por defecto.** El scaffold ya incluye el helper; usalo antes de reportar métricas.
+- **SQL crudo en repositorios.** Sin ORM. Los queries son visibles y debuggeables.

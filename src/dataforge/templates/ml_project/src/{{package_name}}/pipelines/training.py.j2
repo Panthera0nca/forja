@@ -1,0 +1,79 @@
+"""Pipeline de entrenamiento.
+
+Flujo:
+  1. Cargar datos (source o repositorio)
+  2. Materializar features (FeatureStore)
+  3. Split train / val / test
+  4. Cross-validate para detectar overfitting antes de reportar
+  5. Fit final sobre train+val
+  6. Evaluar sobre test
+  7. Guardar modelo
+"""
+from __future__ import annotations
+
+import numpy as np
+from dotenv import load_dotenv
+from rich.console import Console
+from sklearn.ensemble import RandomForestClassifier
+
+from {{ package_name }}.evaluation.metrics import cross_validate, evaluate
+from {{ package_name }}.features.store import store
+from {{ package_name }}.models.base import save_model
+
+load_dotenv()
+console = Console()
+
+
+def _load_data() -> tuple[list[dict], np.ndarray]:
+    """Cargá aquí tus datos reales (fuente, repositorio, archivo, etc.).
+
+    Retorna:
+        records: lista de dicts con los campos crudos
+        y:       array de labels/targets
+    """
+    raise NotImplementedError("Implementá _load_data() con tu fuente real de datos.")
+
+
+def run() -> None:
+    console.rule("[bold cyan]Training pipeline[/bold cyan]")
+
+    # 1. Datos
+    console.print("[dim]Cargando datos...[/dim]")
+    records, y = _load_data()
+
+    # 2. Features
+    X = store.transform(records)
+    console.print(f"  features: {store.feature_names}")
+    console.print(f"  shape: {X.shape}  |  clases únicas: {np.unique(y).tolist()}")
+
+    # 3. Split
+    from sklearn.model_selection import train_test_split
+    X_tv, X_test, y_tv, y_test = train_test_split(X, y, test_size=0.15, random_state=42, stratify=y)
+
+    # 4. Cross-validate — revisá que train y val tengan métricas similares
+    console.print("\n[bold]Cross-validation (5-fold sobre train+val):[/bold]")
+    cv_results = cross_validate(
+        lambda: RandomForestClassifier(n_estimators=100, random_state=42),
+        X_tv, y_tv, n_splits=5, task="classification",
+    )
+    for k, v in cv_results.items():
+        console.print(f"  {k}: {v:.4f}")
+
+    # 5. Fit final
+    console.print("\n[bold]Entrenando modelo final (train+val):[/bold]")
+    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    model.fit(X_tv, y_tv)
+
+    # 6. Evaluar sobre test (solo una vez, al final)
+    console.print("\n[bold]Evaluación en test set:[/bold]")
+    test_metrics = evaluate(model, X_test, y_test, task="classification")
+    for k, v in test_metrics.items():
+        console.print(f"  {k}: {v:.4f}")
+
+    # 7. Guardar
+    path = save_model(model)
+    console.print(f"\n[green]✓ Modelo guardado en {path}[/green]")
+
+
+if __name__ == "__main__":
+    run()

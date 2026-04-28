@@ -1,0 +1,23 @@
+"""Pipeline {{ snake_name }} — [describí qué hace este pipeline]."""
+from __future__ import annotations
+
+from dotenv import load_dotenv
+from rich.console import Console
+
+load_dotenv()
+console = Console()
+
+
+def run() -> None:
+    """Punto de entrada para `dfg run {{ snake_name }}`."""
+    console.rule("[bold cyan]{{ snake_name }}[/bold cyan]")
+
+    # Ejemplo de estructura típica:
+    #
+    # source = {{ class_name }}Source()
+    # for raw in source.fetch():
+    #     record = transform(raw)
+    #     repo.save(record)
+    #
+    # Implementá la lógica del pipeline aquí.
+    raise NotImplementedError("Implementá run() con la lógica del pipeline.")

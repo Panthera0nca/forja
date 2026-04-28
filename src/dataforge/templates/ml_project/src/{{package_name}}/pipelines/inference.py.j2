@@ -1,0 +1,60 @@
+"""Pipeline de inferencia.
+
+Flujo:
+  1. Cargar modelo desde disco
+  2. Cargar datos nuevos (sin label)
+  3. Materializar features (mismo FeatureStore que en training)
+  4. Predecir
+  5. Persistir resultados
+"""
+from __future__ import annotations
+
+import numpy as np
+from dotenv import load_dotenv
+from rich.console import Console
+
+from {{ package_name }}.features.store import store
+from {{ package_name }}.models.base import load_model
+
+load_dotenv()
+console = Console()
+
+
+def _load_new_data() -> list[dict]:
+    """Cargá aquí los datos sobre los que querés predecir.
+
+    Retorna la misma estructura de dicts que usa el FeatureStore en training.
+    """
+    raise NotImplementedError("Implementá _load_new_data() con tu fuente de datos nuevos.")
+
+
+def _save_predictions(records: list[dict], predictions: np.ndarray) -> None:
+    """Guardá las predicciones (base de datos, archivo, API, etc.)."""
+    for record, pred in zip(records, predictions):
+        console.print(f"  id={record.get('id', '?')}  prediction={pred}")
+
+
+def run() -> None:
+    console.rule("[bold cyan]Inference pipeline[/bold cyan]")
+
+    # 1. Modelo
+    model = load_model()
+    console.print("[dim]Modelo cargado.[/dim]")
+
+    # 2. Datos
+    records = _load_new_data()
+    console.print(f"  registros a predecir: {len(records)}")
+
+    # 3. Features
+    X = store.transform(records)
+
+    # 4. Predecir
+    predictions = model.predict(X)
+
+    # 5. Persistir
+    _save_predictions(records, predictions)
+    console.print(f"\n[green]✓ {len(predictions)} predicciones generadas.[/green]")
+
+
+if __name__ == "__main__":
+    run()

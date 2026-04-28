@@ -1,0 +1,7 @@
+"""Test de humo: el package importa y tiene versión."""
+import {{ package_name }}
+
+
+def test_package_imports():
+    assert hasattr({{ package_name }}, "__version__")
+    assert isinstance({{ package_name }}.__version__, str)

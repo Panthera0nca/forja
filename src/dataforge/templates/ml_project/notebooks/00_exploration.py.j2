@@ -1,0 +1,52 @@
+# ---
+# jupyter:
+#   jupytext:
+#     formats: py:percent
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+# ---
+
+# %% [markdown]
+# # Exploración inicial
+#
+# Usá este notebook para entender los datos antes de escribir el pipeline.
+# Cuando algo se vuelva reutilizable, migralo a `src/`.
+
+# %%
+import os
+import numpy as np
+from dotenv import load_dotenv
+
+load_dotenv()
+print("DATABASE_URL configurada:", bool(os.getenv("DATABASE_URL")))
+
+# %% [markdown]
+# ## 1. Explorar features
+
+# %%
+from {{ package_name }}.features.store import store
+
+# Registrá features de prueba y verificá que transforman bien
+store.register("ejemplo", lambda r: r.get("valor", 0.0))
+
+records = [{"valor": 1.5}, {"valor": 2.3}, {"valor": 0.7}]
+X = store.transform(records)
+print("Feature matrix shape:", X.shape)
+print(X)
+
+# %% [markdown]
+# ## 2. Baseline rápido con cross-validation
+
+# %%
+from sklearn.dummy import DummyClassifier
+from {{ package_name }}.evaluation.metrics import cross_validate
+
+# Generá datos sintéticos para validar que el pipeline funciona end-to-end
+X_demo = np.random.rand(100, 3)
+y_demo = np.random.randint(0, 2, size=100)
+
+results = cross_validate(lambda: DummyClassifier(), X_demo, y_demo, n_splits=5)
+print("Baseline CV results:")
+for k, v in results.items():
+    print(f"  {k}: {v:.4f}")

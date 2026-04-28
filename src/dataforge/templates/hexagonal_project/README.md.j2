@@ -1,0 +1,38 @@
+# {{ project_name }}
+
+Proyecto **{{ domain }}** generado con [DataForge](https://github.com/dataforge) — arquitectura hexagonal.
+
+## Estructura
+
+```
+src/{{ package_name }}/
+  domain/
+    entities/       # Entidades del dominio (Pydantic)
+    ports/          # Interfaces abstractas (repositorios, servicios externos)
+  application/
+    use_cases/      # Casos de uso — orquestan domain + ports
+  infrastructure/
+    db/             # Conexión PostgreSQL (psycopg3)
+    repositories/   # Implementaciones concretas de los ports
+```
+
+## Setup
+
+```bash
+cp .env.example .env
+docker compose up -d
+pip install -e .
+dfg migrate
+dfg status
+```
+
+## Comandos
+
+```bash
+dfg status          # estado del proyecto
+dfg add entity X    # añadir entidad
+dfg migrate         # aplicar migraciones SQL
+make test           # correr tests
+```
+
+Creado el {{ created_at }} con DataForge.

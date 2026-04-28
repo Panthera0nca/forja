@@ -1,0 +1,47 @@
+"""Feature store ligero: transforma registros crudos en vectores de features.
+
+No requiere Feast ni ningún servidor externo. Si el proyecto escala,
+podés reemplazar esta implementación sin tocar el resto del código.
+"""
+from __future__ import annotations
+
+from typing import Any, Callable
+
+import numpy as np
+
+
+FeatureFn = Callable[[dict[str, Any]], float | int | str]
+
+
+class FeatureStore:
+    """Registra funciones de features y las aplica sobre registros."""
+
+    def __init__(self) -> None:
+        self._features: dict[str, FeatureFn] = {}
+
+    def register(self, name: str, fn: FeatureFn) -> None:
+        """Registra una función de feature con un nombre."""
+        self._features[name] = fn
+
+    def feature(self, name: str) -> Callable[[FeatureFn], FeatureFn]:
+        """Decorador: @store.feature('nombre')"""
+        def decorator(fn: FeatureFn) -> FeatureFn:
+            self.register(name, fn)
+            return fn
+        return decorator
+
+    @property
+    def feature_names(self) -> list[str]:
+        return list(self._features.keys())
+
+    def transform(self, records: list[dict[str, Any]]) -> np.ndarray:
+        """Aplica todas las features registradas y retorna una matriz (n_samples, n_features)."""
+        rows = []
+        for record in records:
+            row = [fn(record) for fn in self._features.values()]
+            rows.append(row)
+        return np.array(rows, dtype=float)
+
+
+# Instancia global del proyecto — importá y decorá desde tus módulos de features
+store = FeatureStore()

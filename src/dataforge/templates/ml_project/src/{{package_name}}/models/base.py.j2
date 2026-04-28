@@ -1,0 +1,41 @@
+"""Predictor Protocol: interfaz que cualquier modelo debe satisfacer.
+
+No importa si usás sklearn, XGBoost, PyTorch o una regresión lineal a mano:
+si el objeto tiene .fit() y .predict(), cumple el contrato.
+"""
+from __future__ import annotations
+
+import os
+from pathlib import Path
+from typing import Any, Protocol, runtime_checkable
+
+import numpy as np
+
+
+@runtime_checkable
+class Predictor(Protocol):
+    """Contrato mínimo para un modelo de ML."""
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "Predictor":
+        """Entrena el modelo. Retorna self para encadenar."""
+        ...
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """Genera predicciones para X."""
+        ...
+
+
+def save_model(model: Any, path: str | Path | None = None) -> Path:
+    """Serializa el modelo con joblib."""
+    import joblib
+    dest = Path(path or os.getenv("MODEL_PATH", "models/model.joblib"))
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(model, dest)
+    return dest
+
+
+def load_model(path: str | Path | None = None) -> Any:
+    """Deserializa el modelo desde disco."""
+    import joblib
+    src = Path(path or os.getenv("MODEL_PATH", "models/model.joblib"))
+    return joblib.load(src)

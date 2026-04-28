@@ -1,0 +1,8 @@
+"""Sources: fetchers de datos externos.
+
+Cada source expone una función `fetch()` que retorna un iterable de DTOs crudos.
+La validación/limpieza vive en `transforms/`, no aquí.
+"""
+from {{ package_name }}.sources.base import Source
+
+__all__ = ["Source"]

@@ -1,0 +1,9 @@
+# Manifest del proyecto DataForge. Lo usa el CLI `dfg` para detectar y operar.
+[project]
+name = "diabetes"
+package = "diabetes"
+type = "etl"
+version = "0.1.0"
+category = "health"
+sources = []
+pipelines = []

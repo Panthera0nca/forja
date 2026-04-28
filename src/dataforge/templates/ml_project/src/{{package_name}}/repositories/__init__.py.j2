@@ -1,0 +1,8 @@
+"""Repositories: acceso a Postgres (patrón DAO).
+
+Un repositorio por entidad. SQL crudo con psycopg3, sin ORM.
+Los DTOs de `dtos/` entran y salen — nada de diccionarios sueltos.
+"""
+from {{ package_name }}.repositories.base import BaseRepository
+
+__all__ = ["BaseRepository"]
