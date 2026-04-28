@@ -188,6 +188,63 @@ def add_source(
         raise typer.Exit(1)
 
 
+@app.command("exporter", help="Añadir un exporter al proyecto (--format sql|excel)")
+def add_exporter(
+    name: str = typer.Argument(..., help="Nombre snake_case del exporter (ej: ventas, pacientes)"),
+    fmt: str = typer.Option("excel", "--format", "-f", help="Formato de salida: sql | excel"),
+    no_confirm: bool = typer.Option(False, "--yes", "-y", help="No pedir confirmación"),
+) -> None:
+    ui = UI()
+    info = _require_project(ui)
+    root = Path(info["root"])
+    package = info["package"]
+
+    if fmt not in ("sql", "excel"):
+        ui.error("Formato inválido. Usá --format sql o --format excel")
+        raise typer.Exit(1)
+
+    snake_name = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
+    class_name = "".join(w.capitalize() for w in snake_name.split("_"))
+    suffix = "sql" if fmt == "sql" else "excel"
+    filename = f"{snake_name}_{suffix}.py"
+    dest = root / "src" / package / "exporters" / filename
+
+    ui.header(f"add exporter '{snake_name}' [{fmt}]")
+    ui.key_value("Clase",   f"{class_name}{'Sql' if fmt == 'sql' else 'Excel'}Exporter")
+    ui.key_value("Archivo", str(dest.relative_to(root)))
+    ui.key_value("Salida",  f"exports/{snake_name}.{'sql' if fmt == 'sql' else 'xlsx'}")
+    ui.newline()
+
+    if dest.exists():
+        ui.error(f"'{dest.relative_to(root)}' ya existe.")
+        raise typer.Exit(1)
+
+    if not no_confirm:
+        ok = typer.confirm("  ¿Generar?", default=True)
+        if not ok:
+            ui.info("Cancelado.")
+            raise typer.Exit(0)
+
+    template = f"components/exporter/{'sql' if fmt == 'sql' else 'excel'}_exporter.py.j2"
+    context = {
+        "package_name": package,
+        "snake_name":   snake_name,
+        "class_name":   class_name,
+        "created_at":   datetime.now().strftime("%Y-%m-%d"),
+    }
+    try:
+        render_file(template, dest, context)
+        ui.file_created(str(dest.relative_to(root)))
+        ui.newline()
+        ui.success(f"Exporter '{snake_name}' [{fmt}] creado")
+        ui.info(f"→ Usalo en un pipeline: exporter.export(records, Path('exports/{snake_name}.{'sql' if fmt == 'sql' else 'xlsx'}'))")
+        if fmt == "excel":
+            ui.info("→ Requiere: pip install openpyxl")
+    except Exception as e:
+        ui.error(f"Error al generar el exporter: {e}")
+        raise typer.Exit(1)
+
+
 @app.command("pipeline", help="Añadir un pipeline al proyecto")
 def add_pipeline(
     name: str = typer.Argument(..., help="Nombre snake_case del pipeline (ej: ingestion, daily_report)"),
