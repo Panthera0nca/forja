@@ -310,6 +310,7 @@ def init(
     # ------------------------------------------------------------------
     template_name = TEMPLATE_FOR_ARCH[chosen_arch]
     now = datetime.now().strftime("%Y-%m-%d")
+    from dataforge import __version__ as _forja_version
     context = {
         "project_name":    name,
         "package_name":    pkg,
@@ -318,6 +319,7 @@ def init(
         "created_at":      now,
         "python_version":  "3.12",
         "postgres_image":  "postgres:16-alpine",
+        "forja_version":   _forja_version,
     }
 
     ui.newline()

@@ -79,6 +79,7 @@ class ProjectManifest(BaseModel):
     version: str = "0.1.0"
     category: str = "other"
     domain: str = ""
+    forja_version: str = "0.1.0"
     sources: list[str] = Field(default_factory=list)
     pipelines: list[str] = Field(default_factory=list)
 

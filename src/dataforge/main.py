@@ -16,6 +16,7 @@ from dataforge.commands import (
     migrate_cmd,
     run_cmd,
     status_cmd,
+    upgrade_cmd,
 )
 from dataforge.core.ui import UI
 
@@ -38,6 +39,7 @@ app.command(name="run", help="Ejecutar un pipeline del proyecto")(run_cmd.run)
 app.command(name="inspect", help="Schema + estadísticas + muestra de una tabla")(inspect_cmd.inspect)
 app.command(name="export", help="Correr un exporter y escribir el archivo de salida")(export_cmd.export)
 app.command(name="migrate", help="Aplicar migraciones SQL versionadas")(migrate_cmd.migrate)
+app.command(name="upgrade", help="Actualizar proyecto a la versión actual de forja")(upgrade_cmd.upgrade)
 
 # add tiene subcomandos (source / entity / pipeline)
 app.add_typer(add_cmd.app, name="add", help="Añadir componentes al proyecto")
