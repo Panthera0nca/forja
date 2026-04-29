@@ -129,7 +129,7 @@ def _ask_domain(ui: UI, detected: str, confidence: float) -> str:
     raw = typer.prompt("  Número o nombre de dominio").strip()
     if raw.isdigit() and 1 <= int(raw) <= len(domain_options):
         return domain_options[int(raw) - 1]
-    if raw in WORKFLOWS:
+    if raw in get_all_workflows():
         return raw
     ui.warning(f"Opción inválida, usando '{detected}'")
     return detected
@@ -309,7 +309,6 @@ def init(
     # ------------------------------------------------------------------
     # Renderizar template
     # ------------------------------------------------------------------
-    template_name = TEMPLATE_FOR_ARCH[chosen_arch]
     now = datetime.now().strftime("%Y-%m-%d")
     from dataforge import __version__ as _forja_version
     context = {
@@ -325,7 +324,16 @@ def init(
 
     ui.newline()
     ui.header(f"Generando scaffold '{name}' [{chosen_arch}]")
-    created = render_template(template_name, dest, context)
+
+    # Arquitecturas de plugins usan template_path absoluto
+    from dataforge.core.plugins import get_registry
+    from dataforge.core.templates import render_template_from_path
+    plugin_arch = get_registry().architectures.get(chosen_arch)
+    if plugin_arch:
+        created = render_template_from_path(plugin_arch.template_path, dest, context)
+    else:
+        template_name = TEMPLATE_FOR_ARCH[chosen_arch]
+        created = render_template(template_name, dest, context)
     for path in created:
         try:
             rel = path.relative_to(Path.cwd())
