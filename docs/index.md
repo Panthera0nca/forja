@@ -56,6 +56,12 @@ dfg doctor                 # salud del proyecto
 
 ---
 
+## Wizard de dominio
+
+Al ejecutar `dfg init`, el clasificador detecta el dominio del proyecto por su nombre y propone la arquitectura más adecuada. El ejemplo usa un proyecto de genómica — el wizard aplica igual para los 9 dominios disponibles: `health`, `finance`, `logistics`, `ecommerce`, `education`, `climate`, `social_science`, `bioinformatics`, `generic`.
+
+Si la confianza es baja, el wizard muestra todas las opciones para que elijas manualmente. También podés forzar el dominio con `--domain`.
+
 ## Comandos disponibles
 
 | Comando | Descripción |

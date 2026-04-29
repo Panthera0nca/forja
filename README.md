@@ -61,7 +61,7 @@ dfg status
 
 ## Wizard de dominio
 
-Al ejecutar `dfg init`, el clasificador detecta el dominio del proyecto y propone una arquitectura:
+Al ejecutar `dfg init`, el clasificador detecta automáticamente el dominio del proyecto a partir de su nombre y propone la arquitectura más adecuada. El ejemplo a continuación muestra cómo funciona con un proyecto de genómica — pero el wizard aplica igual para cualquiera de los 9 dominios disponibles:
 
 ```
 dfg init analisis_genomico
@@ -74,7 +74,9 @@ dfg init analisis_genomico
   ¿Cambiar arquitectura? [y/N]:
 ```
 
-Dominios disponibles: `health`, `finance`, `logistics`, `ecommerce`, `education`, `climate`, `social_science`, `bioinformatics`, `generic`.
+**Dominios disponibles:** `health`, `finance`, `logistics`, `ecommerce`, `education`, `climate`, `social_science`, `bioinformatics`, `generic`.
+
+El clasificador funciona en español e inglés. Si la confianza es baja, el wizard muestra todas las opciones para que elijas manualmente.
 
 ---
 
