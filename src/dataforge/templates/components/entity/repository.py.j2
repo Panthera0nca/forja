@@ -1,4 +1,4 @@
-"""Repositorio para {{ class_name }} — Operaciones CRUD con SQL Crudo."""
+"""Repositorio para {{ class_name }} — operaciones CRUD con SQL crudo."""
 from __future__ import annotations
 
 from typing import Optional, Sequence
@@ -11,60 +11,73 @@ class {{ class_name }}Repository:
     """Acceso a datos para la tabla '{{ table_name }}'."""
 
     def save(self, entity: {{ class_name }}) -> {{ class_name }}:
-        """Inserta o actualiza un registro."""
-        if entity.id is None:
-            return self._insert(entity)
-        return self._update(entity)
+        return self._insert(entity) if entity.id is None else self._update(entity)
 
     def _insert(self, entity: {{ class_name }}) -> {{ class_name }}:
-        query = """
-            INSERT INTO {{ table_name }} (name, updated_at)
-            VALUES (%(name)s, NOW())
-            RETURNING id, created_at, updated_at;
+        cols = [{% for f in insertable_fields %}"{{ f }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+        placeholders = ", ".join(f"%({c})s" for c in cols)
+        query = f"""
+            INSERT INTO {{ table_name }} ({", ".join(cols)})
+            VALUES ({placeholders})
+            RETURNING id, created_at{% if "updated_at" in updatable_fields %}, updated_at{% endif %};
         """
+        data = entity.model_dump(exclude={"id", "created_at", "updated_at"})
         with get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(query, entity.model_dump(exclude={"id", "created_at", "updated_at"}))
+                cur.execute(query, data)
                 row = cur.fetchone()
                 if row:
-                    entity.id, entity.created_at, entity.updated_at = row
+                    entity.id = row[0]
+                    entity.created_at = row[1]
+                    {% if "updated_at" in updatable_fields %}if len(row) > 2:
+                        entity.updated_at = row[2]{% endif %}
+
         return entity
 
     def _update(self, entity: {{ class_name }}) -> {{ class_name }}:
-        query = """
+        updatable = [{% for f in updatable_fields %}"{{ f }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+        set_clause = ", ".join(f"{c} = %({c})s" for c in updatable)
+        query = f"""
             UPDATE {{ table_name }}
-            SET name = %(name)s, updated_at = NOW()
+            SET {set_clause}{% if "updated_at" in updatable_fields %}, updated_at = NOW(){% endif %}
+
             WHERE id = %(id)s
-            RETURNING updated_at;
+            RETURNING {% if "updated_at" in updatable_fields %}updated_at{% else %}id{% endif %};
         """
+        data = entity.model_dump(exclude={"created_at", "updated_at"})
         with get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(query, entity.model_dump(exclude={"created_at", "updated_at"}))
+                cur.execute(query, data)
                 row = cur.fetchone()
-                if row:
-                    entity.updated_at = row[0]
+                {% if "updated_at" in updatable_fields %}if row and hasattr(entity, "updated_at"):
+                    entity.updated_at = row[0]{% endif %}
+
         return entity
 
     def find_by_id(self, entity_id: int) -> Optional[{{ class_name }}]:
-        """Busca un registro por su ID."""
-        query = "SELECT * FROM {{ table_name }} WHERE id = %s;"
         with get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(query, (entity_id,))
+                cur.execute("SELECT * FROM {{ table_name }} WHERE id = %s;", (entity_id,))
                 row = cur.fetchone()
                 if row:
-                    colnames = [desc[0] for desc in cur.description]
-                    return {{ class_name }}(**dict(zip(colnames, row)))
+                    cols = [d[0] for d in cur.description]
+                    return {{ class_name }}(**dict(zip(cols, row)))
         return None
 
     def list_all(self, limit: int = 100) -> Sequence[{{ class_name }}]:
-        """Lista todos los registros."""
-        query = "SELECT * FROM {{ table_name }} ORDER BY id DESC LIMIT %s;"
         entities = []
         with get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(query, (limit,))
-                colnames = [desc[0] for desc in cur.description]
+                cur.execute(
+                    "SELECT * FROM {{ table_name }} ORDER BY id DESC LIMIT %s;", (limit,)
+                )
+                cols = [d[0] for d in cur.description]
                 for row in cur.fetchall():
-                    entities.append({{ class_name }}(**dict(zip(colnames, row))))
+                    entities.append({{ class_name }}(**dict(zip(cols, row))))
         return entities
+
+    def delete(self, entity_id: int) -> bool:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM {{ table_name }} WHERE id = %s;", (entity_id,))
+                return cur.rowcount > 0

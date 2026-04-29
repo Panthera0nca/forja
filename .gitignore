@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.whl
+*.tar.gz
+
+# Entornos
+.venv/
+venv/
+.env
+
+# Herramientas
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# macOS
+.DS_Store
+
+# Docs generadas
+site/
+
+# Proyectos generados de prueba (no son parte del código de forja)
+miproyecto/
+diabetes/

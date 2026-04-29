@@ -1,0 +1,39 @@
+"""{{ class_name }}SqlExporter — exporta registros como INSERT statements SQL."""
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any, Iterable
+
+
+class {{ class_name }}SqlExporter:
+    """Escribe registros como sentencias INSERT listas para importar en cualquier cliente SQL."""
+
+    name = "{{ snake_name }}_sql"
+    table = "{{ snake_name }}"  # cambiá al nombre real de la tabla
+
+    def export(self, records: Iterable[Any], dest: Path) -> Path:
+        rows = list(records)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if not rows:
+            dest.write_text("-- Sin registros para exportar\n")
+            return dest
+        lines = [f"-- Exportado por forja · {len(rows)} registros\n"]
+
+        for record in rows:
+            data = record if isinstance(record, dict) else record.model_dump()
+            cols = ", ".join(data.keys())
+            vals = ", ".join(self._sql_val(v) for v in data.values())
+            lines.append(f"INSERT INTO {self.table} ({cols}) VALUES ({vals});")
+
+        dest.write_text("\n".join(lines) + "\n")
+        return dest
+
+    @staticmethod
+    def _sql_val(v: Any) -> str:
+        if v is None:
+            return "NULL"
+        if isinstance(v, bool):
+            return "TRUE" if v else "FALSE"
+        if isinstance(v, (int, float)):
+            return str(v)
+        return "'" + str(v).replace("'", "''") + "'"

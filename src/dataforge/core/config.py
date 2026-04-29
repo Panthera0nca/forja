@@ -57,6 +57,19 @@ def get_config() -> DataForgeConfig:
 # ----------------------------- Manifest por proyecto -----------------------------
 
 
+CATEGORIES = [
+    "finance",
+    "health",
+    "applied_physics",
+    "climate",
+    "social_science",
+    "logistics",
+    "marketing",
+    "education",
+    "other",
+]
+
+
 class ProjectManifest(BaseModel):
     """Lo que vive en `dataforge.toml` de cada proyecto generado."""
 
@@ -64,6 +77,9 @@ class ProjectManifest(BaseModel):
     package: str
     type: str = "etl"
     version: str = "0.1.0"
+    category: str = "other"
+    domain: str = ""
+    forja_version: str = "0.1.0"
     sources: list[str] = Field(default_factory=list)
     pipelines: list[str] = Field(default_factory=list)
 

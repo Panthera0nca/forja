@@ -1,0 +1,8 @@
+"""Sources: fetchers que traen datos crudos del exterior.
+
+Convención: cada source es una clase con `name: str` y `fetch() -> Iterable[T]`.
+No validan, no transforman, no persisten. Solo traen.
+"""
+from {{ package_name }}.sources.base import Source
+
+__all__ = ["Source"]

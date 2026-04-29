@@ -1,0 +1,50 @@
+"""{{ class_name }}ExcelExporter — exporta registros a un archivo .xlsx."""
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any, Iterable
+
+
+class {{ class_name }}ExcelExporter:
+    """Escribe registros en un archivo Excel (.xlsx) listo para abrir en cualquier visualizador."""
+
+    name = "{{ snake_name }}_excel"
+    table = "{{ snake_name }}"        # cambiá al nombre real de la tabla
+    sheet_name = "{{ snake_name }}"   # nombre de la hoja en el Excel
+
+    def export(self, records: Iterable[Any], dest: Path) -> Path:
+        try:
+            import openpyxl
+        except ImportError:
+            raise RuntimeError(
+                "openpyxl no está instalado. Corrés: pip install openpyxl"
+            )
+
+        rows = list(records)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = self.sheet_name
+
+        if not rows:
+            ws.append(["Sin registros"])
+            wb.save(dest)
+            return dest
+
+        # Cabeceras
+        first = rows[0] if isinstance(rows[0], dict) else rows[0].model_dump()
+        headers = list(first.keys())
+        ws.append(headers)
+
+        # Filas
+        for record in rows:
+            data = record if isinstance(record, dict) else record.model_dump()
+            ws.append([data.get(h) for h in headers])
+
+        # Ancho automático de columnas
+        for col in ws.columns:
+            max_len = max((len(str(cell.value or "")) for cell in col), default=10)
+            ws.column_dimensions[col[0].column_letter].width = min(max_len + 2, 50)
+
+        wb.save(dest)
+        return dest

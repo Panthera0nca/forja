@@ -1,0 +1,41 @@
+"""Clase base ligera para repositorios.
+
+Propósito: dar utilidades comunes (execute, fetch_one, fetch_all) sin imponer
+un ORM ni abstraer SQL. Cada repositorio hijo escribe su propio SQL.
+"""
+from __future__ import annotations
+
+from typing import Any, Iterable, Sequence
+
+from psycopg.rows import dict_row
+
+from {{ package_name }}.db import get_connection
+
+
+class BaseRepository:
+    """Utilidades para ejecutar SQL crudo con dict rows.
+
+    Los métodos reciben SQL parametrizado (%s) — nunca f-strings con valores.
+    """
+
+    def execute(self, sql: str, params: Sequence[Any] | None = None) -> int:
+        """Ejecuta una sentencia de escritura. Retorna filas afectadas."""
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(sql, params)
+            return cur.rowcount
+
+    def execute_many(self, sql: str, rows: Iterable[Sequence[Any]]) -> int:
+        """Inserta/actualiza en batch."""
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.executemany(sql, list(rows))
+            return cur.rowcount
+
+    def fetch_one(self, sql: str, params: Sequence[Any] | None = None) -> dict | None:
+        with get_connection() as conn, conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(sql, params)
+            return cur.fetchone()
+
+    def fetch_all(self, sql: str, params: Sequence[Any] | None = None) -> list[dict]:
+        with get_connection() as conn, conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(sql, params)
+            return cur.fetchall()

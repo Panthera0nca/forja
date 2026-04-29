@@ -1,20 +1,23 @@
 from __future__ import annotations
-
-from datetime import datetime
-from typing import Optional
+{% if datetime_imports %}
+from datetime import {{ datetime_imports | join(', ') }}
+{% endif %}
+{% if decimal_import %}
+from decimal import Decimal
+{% endif %}
+from typing import {% if typing_imports %}{{ typing_imports | join(', ') }}{% else %}Optional{% endif %}
 
 from pydantic import BaseModel, ConfigDict
+{% for lt in literal_types %}
+
+{{ lt.var_name }} = Literal[{{ lt.values_str }}]
+{% endfor %}
 
 
 class {{ class_name }}(BaseModel):
-    """Esquema de datos para {{ entity_name }}.
-    
-    Este DTO actúa como el contrato entre las capas de Source, Transform y Repository.
-    """
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[int] = None
-    # Añade aquí tus campos
-    name: str
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+{% for f in dto_fields %}
+    {{ f.name }}: {{ f.python_type }}{% if f.python_default is not none %} = {{ f.python_default }}{% endif %}{% if f.comment %}  # {{ f.comment }}{% endif %}
+
+{% endfor %}

@@ -1,0 +1,15 @@
+"""Protocolo base para repositorios del dominio {{ project_name }}."""
+from __future__ import annotations
+
+from typing import Optional, Protocol, Sequence, TypeVar
+
+T = TypeVar("T")
+
+
+class Repository(Protocol[T]):
+    """Contrato mínimo que todo repositorio debe cumplir."""
+
+    def save(self, entity: T) -> T: ...
+    def find_by_id(self, entity_id: int) -> Optional[T]: ...
+    def list_all(self, limit: int = 100) -> Sequence[T]: ...
+    def delete(self, entity_id: int) -> bool: ...

@@ -26,11 +26,16 @@ def detect_project(start: Optional[Path] = None) -> Optional[dict]:
     if manifest is None:
         return None
 
+    # domain: usa el campo explícito si existe, si no cae a category
+    domain = manifest.domain or manifest.category or "generic"
+
     return {
         "root": root,
         "name": manifest.name,
         "package": manifest.package,
         "type": manifest.type,
+        "category": manifest.category,
+        "domain": domain,
         "sources_count": len(manifest.sources),
         "pipelines_count": len(manifest.pipelines),
         "has_migrations": (root / "migrations").is_dir(),

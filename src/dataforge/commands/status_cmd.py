@@ -21,6 +21,7 @@ def status() -> None:
     ui.key_value("Nombre", info["name"])
     ui.key_value("Package", info["package"])
     ui.key_value("Tipo", info["type"])
+    ui.key_value("Categoría", info["category"])
     ui.key_value("Raíz", str(info["root"]))
     ui.key_value("Fuentes", str(info["sources_count"]))
     ui.key_value("Pipelines", str(info["pipelines_count"]))
