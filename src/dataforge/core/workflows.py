@@ -125,8 +125,47 @@ ARCHITECTURE_DESCRIPTIONS = {
 
 
 def get_workflow(domain: str) -> Workflow:
+    from dataforge.core.plugins import get_registry
+    registry = get_registry()
+    if domain in registry.domains:
+        pd = registry.domains[domain]
+        return Workflow(
+            domain=pd.key,
+            display_name=pd.display_name,
+            description=pd.description,
+            architecture=pd.architecture,
+            suggested_entities=pd.suggested_entities,
+            features=pd.features,
+            notes=pd.notes,
+        )
     return WORKFLOWS.get(domain, WORKFLOWS["generic"])
 
 
+def get_all_workflows() -> dict[str, Workflow]:
+    from dataforge.core.plugins import get_registry
+    registry = get_registry()
+    merged = dict(WORKFLOWS)
+    for pd in registry.domains.values():
+        merged[pd.key] = Workflow(
+            domain=pd.key,
+            display_name=pd.display_name,
+            description=pd.description,
+            architecture=pd.architecture,
+            suggested_entities=pd.suggested_entities,
+            features=pd.features,
+            notes=pd.notes,
+        )
+    return merged
+
+
+def get_all_architectures() -> dict[str, str]:
+    from dataforge.core.plugins import get_registry
+    registry = get_registry()
+    merged = dict(ARCHITECTURE_DESCRIPTIONS)
+    for pa in registry.architectures.values():
+        merged[pa.key] = pa.description
+    return merged
+
+
 def list_workflows() -> list[Workflow]:
-    return list(WORKFLOWS.values())
+    return list(get_all_workflows().values())

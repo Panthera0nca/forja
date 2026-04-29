@@ -112,7 +112,18 @@ def _build() -> "Pipeline":
     from sklearn.neural_network import MLPClassifier
     from sklearn.pipeline import Pipeline
 
-    texts, labels = zip(*_TRAINING)
+    training = list(_TRAINING)
+
+    # Agregar keywords de plugins instalados
+    try:
+        from dataforge.core.plugins import get_registry
+        for domain in get_registry().domains.values():
+            if domain.keywords:
+                training.append((" ".join(domain.keywords), domain.key))
+    except Exception:
+        pass
+
+    texts, labels = zip(*training)
     clf = Pipeline([
         ("tfidf", TfidfVectorizer(
             analyzer="word",
@@ -136,6 +147,12 @@ def _get() -> "Pipeline":
     if _pipeline is None:
         _pipeline = _build()
     return _pipeline
+
+
+def reset_pipeline() -> None:
+    """Fuerza reconstrucción del clasificador (útil si se instalan plugins en runtime)."""
+    global _pipeline
+    _pipeline = None
 
 
 # ---------------------------------------------------------------------------

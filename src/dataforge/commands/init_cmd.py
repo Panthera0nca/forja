@@ -12,10 +12,9 @@ from rich.table import Table
 from dataforge.core.config import CATEGORIES
 from dataforge.core.templates import render_template
 from dataforge.core.ui import UI
-from dataforge.core.workflows import ARCHITECTURE_DESCRIPTIONS, WORKFLOWS, get_workflow
+from dataforge.core.workflows import get_workflow, get_all_workflows, get_all_architectures
 
 PACKAGE_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
-ARCH_CHOICES = list(ARCHITECTURE_DESCRIPTIONS.keys())
 TEMPLATE_FOR_ARCH = {"hexagonal": "hexagonal_project", "etl": "etl_project", "ml": "ml_project"}
 
 # Umbrales de confianza
@@ -74,7 +73,7 @@ def _show_classifier_table(top: list[tuple[str, float]], confidence: float) -> N
 
 def _ask_domain(ui: UI, detected: str, confidence: float) -> str:
     """Pregunta por el dominio según nivel de confianza."""
-    domain_options = list(WORKFLOWS.keys())
+    domain_options = list(get_all_workflows().keys())
     wf = get_workflow(detected)
 
     if confidence >= _HIGH:
@@ -101,7 +100,7 @@ def _ask_domain(ui: UI, detected: str, confidence: float) -> str:
             return detected
         if raw.isdigit() and 1 <= int(raw) <= len(domain_options):
             return domain_options[int(raw) - 1]
-        if raw in WORKFLOWS:
+        if raw in get_all_workflows():
             return raw
         ui.warning(f"Opción inválida, usando '{detected}'")
         return detected
@@ -118,7 +117,7 @@ def _ask_domain(ui: UI, detected: str, confidence: float) -> str:
         raw = typer.prompt("  Número o nombre de dominio").strip()
         if raw.isdigit() and 1 <= int(raw) <= len(domain_options):
             return domain_options[int(raw) - 1]
-        if raw in WORKFLOWS:
+        if raw in get_all_workflows():
             return raw
         ui.warning(f"Opción inválida, usando 'generic'")
         return "generic"
@@ -140,59 +139,58 @@ def _ask_arch(ui: UI, domain: str, confidence: float) -> str:
     """Propone arquitectura usando la confianza del dominio como señal."""
     wf = get_workflow(domain)
     suggested = wf.architecture
+    arch_descriptions = get_all_architectures()
+    arch_choices = list(arch_descriptions.keys())
 
     if confidence >= _HIGH:
-        # Confianza alta: proponer directamente, pedir confirmación simple
         ui.key_value(
             "Arquitectura",
-            f"{ARCHITECTURE_DESCRIPTIONS[suggested]}  [green](recomendada)[/green]",
+            f"{arch_descriptions.get(suggested, suggested)}  [green](recomendada)[/green]",
         )
         change = typer.confirm("  ¿Cambiar arquitectura?", default=False)
         if not change:
             return suggested
 
     elif confidence >= _MEDIUM:
-        # Confianza media: mostrar las dos como opciones, marcar la sugerida
         ui.warning(
             f"  Confianza media — arquitecturas disponibles "
             f"(sugerida: [bold]{suggested}[/bold]):"
         )
-        for i, a in enumerate(ARCH_CHOICES, 1):
+        for i, a in enumerate(arch_choices, 1):
             marker = " ◀ sugerida" if a == suggested else ""
-            ui.info(f"  {i}. {ARCHITECTURE_DESCRIPTIONS[a]}{marker}")
+            ui.info(f"  {i}. {arch_descriptions[a]}{marker}")
         raw = typer.prompt(
             f"  Número o nombre (Enter = '{suggested}')",
             default=suggested,
         ).strip()
         if raw in ("", suggested):
             return suggested
-        if raw.isdigit() and 1 <= int(raw) <= len(ARCH_CHOICES):
-            return ARCH_CHOICES[int(raw) - 1]
-        if raw in ARCH_CHOICES:
+        if raw.isdigit() and 1 <= int(raw) <= len(arch_choices):
+            return arch_choices[int(raw) - 1]
+        if raw in arch_choices:
             return raw
         ui.warning(f"Opción inválida, usando '{suggested}'")
         return suggested
 
     else:
-        # Confianza baja: mostrar las dos sin marcar ninguna
         ui.warning("  Elige la arquitectura del proyecto:")
-        for i, a in enumerate(ARCH_CHOICES, 1):
-            ui.info(f"  {i}. {ARCHITECTURE_DESCRIPTIONS[a]}")
+        for i, a in enumerate(arch_choices, 1):
+            ui.info(f"  {i}. {arch_descriptions[a]}")
         raw = typer.prompt("  Número o nombre de arquitectura").strip()
-        if raw.isdigit() and 1 <= int(raw) <= len(ARCH_CHOICES):
-            return ARCH_CHOICES[int(raw) - 1]
-        if raw in ARCH_CHOICES:
+        if raw.isdigit() and 1 <= int(raw) <= len(arch_choices):
+            return arch_choices[int(raw) - 1]
+        if raw in arch_choices:
             return raw
         ui.warning(f"Opción inválida, usando '{suggested}'")
         return suggested
 
     # Llegamos aquí si confidence >= HIGH y el usuario quiso cambiar
-    for i, a in enumerate(ARCH_CHOICES, 1):
-        ui.info(f"  {i}. {ARCHITECTURE_DESCRIPTIONS[a]}")
+    for i, a in enumerate(arch_choices, 1):
+        ui.info(f"  {i}. {arch_descriptions[a]}")
     raw = typer.prompt("  Número o nombre de arquitectura").strip()
-    if raw.isdigit() and 1 <= int(raw) <= len(ARCH_CHOICES):
-        return ARCH_CHOICES[int(raw) - 1]
-    if raw in ARCH_CHOICES:
+    if raw.isdigit() and 1 <= int(raw) <= len(arch_choices):
+        return arch_choices[int(raw) - 1]
+    if raw in arch_choices:
         return raw
     ui.warning(f"Opción inválida, usando '{suggested}'")
     return suggested
@@ -206,11 +204,11 @@ def init(
     ),
     domain: str | None = typer.Option(
         None, "--domain", "-d",
-        help=f"Forzar dominio sin wizard. Opciones: {', '.join(WORKFLOWS)}",
+        help="Forzar dominio sin wizard (ej: health, finance, logistics...)",
     ),
     arch: str | None = typer.Option(
         None, "--arch", "-a",
-        help=f"Arquitectura: {', '.join(ARCH_CHOICES)}",
+        help="Arquitectura: etl | hexagonal | ml (o arquitecturas de plugins)",
     ),
     no_wizard: bool = typer.Option(False, "--no-wizard", help="Saltar wizard interactivo"),
     force: bool = typer.Option(False, "--force", "-f", help="Sobrescribir si existe"),
@@ -227,12 +225,15 @@ def init(
         ui.error(f"Package '{pkg}' inválido. Debe ser snake_case empezando por letra.")
         raise typer.Exit(1)
 
-    if domain and domain not in WORKFLOWS:
-        ui.error(f"Dominio '{domain}' inválido. Opciones: {', '.join(WORKFLOWS)}")
+    all_workflows = get_all_workflows()
+    all_archs = get_all_architectures()
+
+    if domain and domain not in all_workflows:
+        ui.error(f"Dominio '{domain}' inválido. Opciones: {', '.join(all_workflows)}")
         raise typer.Exit(1)
 
-    if arch and arch not in ARCH_CHOICES:
-        ui.error(f"Arquitectura '{arch}' inválida. Opciones: {', '.join(ARCH_CHOICES)}")
+    if arch and arch not in all_archs:
+        ui.error(f"Arquitectura '{arch}' inválida. Opciones: {', '.join(all_archs)}")
         raise typer.Exit(1)
 
     # ------------------------------------------------------------------
