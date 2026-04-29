@@ -1,0 +1,56 @@
+site_name: forja
+site_description: Scaffolding inteligente para proyectos de datos en Python
+site_url: https://forja.readthedocs.io
+repo_url: https://github.com/Panthera0nca/forja
+repo_name: forja
+edit_uri: ""
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: cyan
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Modo claro
+    - scheme: default
+      primary: cyan
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Modo oscuro
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Inicio: index.md
+  - Inicio rápido: quickstart.md
+  - Comandos: commands.md
+  - Arquitecturas: architectures.md
+  - Dominios: domains.md
+  - Plugins: plugins.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+
+extra:
+  social:
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/forja/
+      name: forja en PyPI

@@ -1,6 +1,6 @@
 [project]
 name = "forja"
-version = "0.7.0"
+version = "1.0.0"
 description = "Scaffolding inteligente para proyectos de datos en Python — ETL, hexagonal y ML pipeline"
 requires-python = ">=3.10"
 authors = [{ name = "Juan" }]
@@ -21,6 +21,7 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "ruff>=0.7",
+    "mkdocs-material>=9.5",
 ]
 
 [project.scripts]
