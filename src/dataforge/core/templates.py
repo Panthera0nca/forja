@@ -78,6 +78,37 @@ def render_template(template: str, destination: Path, context: dict) -> list[Pat
     return created
 
 
+def render_template_from_path(template_dir: Path, destination: Path, context: dict) -> list[Path]:
+    """Igual que render_template pero recibe una ruta absoluta (para plugins)."""
+    if not template_dir.is_dir():
+        raise FileNotFoundError(f"Template dir '{template_dir}' no encontrado")
+
+    env = Environment(
+        loader=FileSystemLoader(str(template_dir)),
+        keep_trailing_newline=True,
+        undefined=StrictUndefined,
+    )
+
+    created: list[Path] = []
+    for path in sorted(template_dir.rglob("*")):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(template_dir)
+        dest_rel = _translate_path(rel, context)
+        dest_abs = destination / dest_rel
+        dest_abs.parent.mkdir(parents=True, exist_ok=True)
+
+        if rel.suffix == ".j2":
+            template_obj = env.get_template(str(rel).replace("\\", "/"))
+            dest_abs.write_text(template_obj.render(**context))
+        else:
+            shutil.copyfile(template_dir / rel, dest_abs)
+
+        created.append(dest_abs)
+
+    return created
+
+
 def render_file(template_rel_path: str, destination: Path, context: dict) -> Path:
     """Renderiza un solo archivo .j2 (relativo a TEMPLATES_ROOT) en `destination`.
 

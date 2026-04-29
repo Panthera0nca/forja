@@ -1,6 +1,6 @@
 [project]
 name = "forja"
-version = "1.0.0"
+version = "1.0.1"
 description = "Scaffolding inteligente para proyectos de datos en Python — ETL, hexagonal y ML pipeline"
 requires-python = ">=3.10"
 authors = [{ name = "Juan David Lopez Leon" }]
