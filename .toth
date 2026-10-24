@@ -1,0 +1,3 @@
+# toth: este repo anota cada commit en su bitácora.
+# Quitar este archivo desactiva toth aquí en todos los dispositivos.
+dir = docs/bitacora
